@@ -1,12 +1,15 @@
-
 #include <stdio.h>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
 //g++ threads.c -pthread
 //g++ -o ejecutable holaMundo.cpp
 //sudo g++ -I/usr/local/include/opencv -I/usr/local/include/opencv2 filter_demo_SO.cpp -o ejemplo_filtro -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs
@@ -21,8 +24,19 @@ void left(void *g){
     (Mat*)&g=img(cv::Range(0, img.rows / 2 - 1), cv::Range(0, img.cols / 2 - 1));
     It's better to use Mat::(Range rowRange, Range colRange) here:
 }*/
+void *t_pthread(void *);
+void *t_pthread2(void *);
+Mat src, dst, dstx, dsty;
+    Mat kernel;
+    Point anchor;
+    double delta;
+    int ddepth;
+    int kernel_size;
+
 int main(int agr,char **argv){
+
     //pthread_t thread_id1;
+    /*
     int status;
     int fd[2];
     pipe(fd);
@@ -69,4 +83,40 @@ int main(int agr,char **argv){
         
     }
     return 1;
+    */
+   /// Declare variables
+    
+    pthread_t thread_id,thread_id1;
+
+    /// Load an image
+    src = imread( argv[1] );
+
+    if( !src.data )
+    { return -1; }
+    pthread_create(&thread_id,NULL,t_pthread2,NULL);
+    /// Initialize arguments for the filter
+    anchor = Point( -1, -1 );
+    delta = 0;
+    ddepth = -1;
+    //Gaussian
+    kernel=getGaussianKernel(15,3);
+    pthread_create(&thread_id1,NULL,t_pthread,NULL);
+    pthread_join(thread_id1,NULL);
+    pthread_join(thread_id,NULL);
+    waitKey( 0 ); //remover
+    return 0;
+}
+void *t_pthread(void *r){
+        filter2D(src, dst, ddepth , kernel, anchor, delta
+        , BORDER_DEFAULT );
+        bool isSuccess = imwrite("output_lena.jpg",dst); 
+
+        if (isSuccess == true){ //remover
+            imshow( "imagen filtrada", dst );
+        }
+        pthread_exit(0);
+}
+void *t_pthread2(void *r){
+    imshow( "imagen original", src ); //remover
+    pthread_exit(0);
 }
