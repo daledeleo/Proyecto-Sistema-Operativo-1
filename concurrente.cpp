@@ -10,8 +10,10 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-/* numeros de hilos y numeros de partes en la que se
-va a dividir la imagen solo puede ser 4*/
+/* Como crear el ejecutabel del programa
+    sudo g++ -I/usr/local/include/opencv -I/usr/local/include/opencv2 concurrente.cpp -pthread -o concurrente -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs
+*/
+    
 using namespace cv;
 void inicializar();
 void *thread_process(void *rt);
@@ -62,16 +64,12 @@ int main (int argc, char** argv){
     //cargando la imagen
     img=imread(argv[1]);
     
-    /*
-    sudo g++ -I/usr/local/include/opencv -I/usr/local/include/opencv2 concurrente.cpp -pthread -o concurrente -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs
-     */
     
     //Si no se puede cargar la imagen el programa se detiene
     if(!img.data){
         return -1;
     }
     imshow("imagen principal",img);
-    //pthread_create(&thread_id2,NULL,thread_process,NULL);
     // Initialize arguments for the filter
     inicializar();
 
@@ -81,31 +79,30 @@ int main (int argc, char** argv){
         exit(1);
     }else if(pid==0){ //Proceso hijo 
         //se crea 1 hilo de trabajo
-        pthread_create(&thread_id1,NULL,thread_process,(void *)"bottom_left");
-        bottom_right = img(cv::Range(img.rows / 2, img.rows - 1), cv::Range(img.cols / 2, img.cols - 1));
-        //bottom_right = img(cv::Range(img.rows / 2, img.rows ), cv::Range(img.cols -1, img.cols/2 -1));
+        //pthread_create(&thread_id1,NULL,thread_process,(void *)"bottom_left");
+        //bottom_right = img(cv::Range(img.rows / 2, img.rows - 1), cv::Range(img.cols / 2, img.cols - 1));
+        bottom_right = img(cv::Range(img.rows / 2, img.rows -1), cv::Range(0, img.cols -1));
         filter2D(bottom_right, bottom_right, ddepth , kernel,
         anchor, delta,BORDER_DEFAULT );
         
-        pthread_join(thread_id1,NULL);
+        //pthread_join(thread_id1,NULL);
 
-        hconcat(bottom_left,bottom_right,bottom_left);
-        imwrite("imagen_finalbottom.jpg",bottom_left);
+        //hconcat(bottom_left,bottom_right,bottom_right);
+        imwrite("imagen_finalbottom.jpg",bottom_right);
     }else{
         
-        pthread_create(&thread_id1,NULL,thread_process,(void *)"top_left");
+        //pthread_create(&thread_id1,NULL,thread_process,(void *)"top_left");
         //top_right= img(cv::Range(0, img.rows / 2 - 1), cv::Range(img.cols / 2, img.cols - 1));
-        top_right= img(cv::Range(0, img.rows / 2 - 1), cv::Range(img.cols / 2, img.cols - 1));
+        top_right= img(cv::Range(0, img.rows / 2 - 1), cv::Range(0, img.cols - 1));
         filter2D(top_right, top_right, ddepth , kernel,
         anchor, delta,BORDER_DEFAULT );
 
-        pthread_join(thread_id1,NULL);
-        hconcat(top_left,top_right,top_left);
+        //pthread_join(thread_id1,NULL);
+        //hconcat(top_left,top_right,top_left);
         waitpid(pid, &status, WUNTRACED | WCONTINUED);
         bottom_left=imread("imagen_finalbottom.jpg");
-        vconcat(top_left,bottom_left,bottom_left);
+        vconcat(top_right,bottom_left,bottom_left);
         imshow("imagen final",bottom_left);
-        //pthread_join(thread_id2,NULL);
         waitKey(0);
     }
     return 1;
