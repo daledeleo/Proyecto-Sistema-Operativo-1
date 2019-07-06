@@ -52,7 +52,6 @@ int main (int argc, char** argv){
     //cargando la imagen
     img=imread(argv[1]);
     
-    
     //Si no se puede cargar la imagen el programa se detiene
     if(!img.data){
         return -1;
@@ -108,7 +107,6 @@ int main (int argc, char** argv){
     }
     remove("./imagen_finalbottom.jpg");
     return 1;
-
 }
 
 void inicializar(){
