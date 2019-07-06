@@ -44,8 +44,7 @@ int main ( int argc, char** argv )
 
   //Gaussian
   kernel=getGaussianKernel(15,3);
-  filter2D(src, dst, ddepth , kernel, anchor, delta
-  , BORDER_DEFAULT );
+  filter2D(src, dst, ddepth , kernel, anchor, delta, BORDER_DEFAULT );
   bool isSuccess = imwrite("output_lena.jpg",dst); 
 
   if (isSuccess == true) //remover

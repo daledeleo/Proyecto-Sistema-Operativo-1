@@ -1,3 +1,115 @@
+
+#include <stdio.h>
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include <stdlib.h>
+#include <string.h>
+#include <pthread.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
+using namespace cv;
+struct Memory{
+    int status;
+    Mat de;
+};
+int main(int argc, char** argv) {
+    int shmid;
+    struct Memory *shm;
+    //Mat *shared_mat;
+    /*
+    shmid = shmget(2009, sizeof(struct Memory), 0666 | IPC_CREAT);
+    shm = (struct Memory *)shmat(shmid, 0, 0);
+    shmctl(shmid, IPC_RMID, NULL);
+    */
+    Mat g=(imread(argv[1]));
+    imshow("principal",g);
+    printf("llegoSize: %d\n",(g).cols);
+    printf("tamanio Mat: %ld\n",sizeof(Mat));
+    if(fork()==0){
+        shmid = shmget(2009, sizeof(Memory), 0);
+        if(shmid<0){
+        perror("shmget child");
+        return 1;
+    }
+        //shm = (struct Memory *)shmat(shmid, 0, 0);
+        shm= (Memory *)shmat(shmid, 0, 0);
+        if(shm==(Memory *)-1){
+        perror("shm");
+        return 1;
+    }   
+        for(int i=0;i<=10;i++){
+            printf("%d\n",i);
+            shm->status=shm->status+i;
+        }
+        
+        shm->de=imread(argv[1]);
+        
+        printf("size1: %ld\n",sizeof((shm->de).cols));
+        exit(1);
+    }
+    
+    shmid = shmget(2009, sizeof(Memory), IPC_CREAT|0666);
+    if(shmid<0){
+        perror("shmget");
+        return 1;
+
+    }
+    shm = (Memory *)shmat(shmid, 0, 0);
+    if(shm==(Memory *)-1){
+        perror("shm");
+        return 1;
+    }
+    wait(NULL);
+    printf("resultado de status: %d, FIN\n",shm->status);
+    if((shm->de).data){
+        printf("yes\n");
+        printf("size2: %ld\n",sizeof((shm->de).cols));
+        cv::imshow("final",(shm->de));
+    }
+    shmdt(shm);
+    shmctl(shmid, IPC_RMID, NULL);
+    waitKey( 0 ); //remover
+    
+    return 1;
+    /* 
+   int shmid;
+   char *shm;
+
+   if(fork() == 0) {
+      shmid = shmget(2009, SHMSIZE, 0);
+      shm = (char *)shmat(shmid, 0, 0);
+      char *s = (char *) shm;
+      *s = '\0';  /* Set first location to string terminator, for later append/
+      int i;
+      for(i=0; i<5; i++) {
+         int n;  /* Variable to get the number into 
+         printf("Enter number<%i>: ", i);
+         scanf("%d", &n);
+         sprintf(s, "%s%d", s, n);  /* Append number to string 
+      }
+      strcat(s, "\n");  /* Append newline 
+      printf ("Child wrote <%s>\n",shm);
+      shmdt(shm);
+   }
+   else {
+      /* Variable s removed, it wasn't used/
+      /* Removed first call to wait as it held up parent process 
+      shmid = shmget(2009, SHMSIZE, 0666 | IPC_CREAT);
+      shm = (char *)shmat(shmid, 0, 0);
+      wait(NULL);
+      printf ("Parent reads <%s>\n",shm) ;
+      shmdt(shm);
+      shmctl(shmid, IPC_RMID, NULL);
+   }
+   return 0;
+   */
+}
+
+/*
 #include <stdio.h>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -23,7 +135,7 @@ cv::Mat top_left,top_right,bottom_left,bottom_right;
 void left(void *g){
     (Mat*)&g=img(cv::Range(0, img.rows / 2 - 1), cv::Range(0, img.cols / 2 - 1));
     It's better to use Mat::(Range rowRange, Range colRange) here:
-}*/
+}
 void *t_pthread(void *);
 void *t_pthread2(void *);
 Mat src, dst, dstx, dsty;
@@ -83,7 +195,7 @@ int main(int agr,char **argv){
         
     }
     return 1;
-    */
+    
    /// Declare variables
     
     pthread_t thread_id,thread_id1;
@@ -120,3 +232,4 @@ void *t_pthread2(void *r){
     imshow( "imagen original", src ); //remover
     pthread_exit(0);
 }
+*/
